@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script type="module">
+      import MyPromise from './my-promise.js';
+      new MyPromise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(666);
+        }, 2000);
+      })
+        .then()
+        .then(
+          (res1) => {
+            console.log('res1===', res1);
+          },
+          (err1) => {
+            console.log('err1===', err1);
+          }
+        );
+    </script>
+  </body>
+</html>

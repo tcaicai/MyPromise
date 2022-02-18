@@ -1,0 +1,22 @@
+{
+  "name": "mypromise",
+  "version": "1.0.0",
+  "description": "",
+  "main": "my-promise.js",
+  "scripts": {
+    "test": "promises-aplus-tests my-promise"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tcaicai/MyPromise.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tcaicai/MyPromise/issues"
+  },
+  "homepage": "https://github.com/tcaicai/MyPromise#readme",
+  "devDependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}

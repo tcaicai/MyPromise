@@ -141,6 +141,35 @@ class MyPromise {
       reject(reason);
     });
   }
+
+  static all(list) {
+    return new MyPromise((resolve, reject) => {
+      let values = [],
+        count = 0;
+      for (let [index, promise] of list.entries()) {
+        promise.then(
+          (res) => {
+            values[index] = res;
+            count++;
+            count === list.length && resolve(values);
+          },
+          (err) => reject(err)
+        );
+      }
+    });
+  }
+  static race(list) {
+    return new MyPromise((resolve, reject) => {
+      for (let [, promise] of list.entries()) {
+        promise.then(
+          (res) => {
+            resolve(res);
+          },
+          (err) => reject(err)
+        );
+      }
+    });
+  }
 }
 MyPromise.deferred = function () {
   var result = {};

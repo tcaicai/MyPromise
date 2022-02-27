@@ -1,37 +1,61 @@
 const PENDING = 'pending';
 const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
-const isFunction = fn => typeof fn === 'function';
+const isFunction = (fn) => typeof fn === 'function';
+const isObject = (obj) => typeof obj === 'object';
 const resolvePromise = (promise, resolveRes, resolve, reject) => {
   if (promise === resolveRes) {
     return reject(new TypeError('The promise and the return value are the same'));
   }
-  if (!isFunction(resolveRes)) {
-    resolve(resolveRes);
-  } else {
-    let called;
+
+  let called;
+  if (typeof resolveRes === MyPromise) {
+    resolve.then(
+      (res) => {
+        resolvePromise(promise, res, resolve, reject);
+      },
+      (err) => {
+        reject(err);
+      }
+    );
+  } else if (resolveRes !== null && (isObject(resolveRes) || isFunction(resolveRes))) {
     try {
-      let then = resolveRes.then;
+      const then = resolveRes.then;
       if (isFunction(then)) {
-        then.call(resolveRes, res => {
-          if (called) return;
-          called = true;
-          resolvePromise(promise, res, resolve, reject);
-        }, err => {
-          if (called) return;
-          called = true;
-          reject(err)
-        })
+        then.call(
+          resolveRes,
+          (value) => {
+            if (called) return;
+            called = true;
+            resolvePromise(promise, value, resolve, reject);
+          },
+          (reason) => {
+            if (called) return;
+            called = true;
+            reject(reason);
+          }
+        );
+      } else {
+        if (called) return;
+        called = true;
+        resolve(resolveRes);
       }
     } catch (e) {
       if (called) return;
+      called = true;
       reject(e);
     }
+  } else {
+    resolve(resolveRes);
   }
-}
+};
 
-export default class MyPromise {
+class MyPromise {
   constructor(executor) {
+    if (typeof executor !== 'function') {
+      throw new TypeError(`Promise resolver ${executor} is not a function`);
+    }
+
     this.status = PENDING;
     this.value = undefined;
     this.reason = undefined;
@@ -62,8 +86,11 @@ export default class MyPromise {
   then(onResolve, onReject) {
     // 入参为空的情况
     onResolve = isFunction(onResolve) ? onResolve : (value) => value;
-    onReject = isFunction(onReject) ? onReject : (err) => { throw err; };
-
+    onReject = isFunction(onReject)
+      ? onReject
+      : (err) => {
+          throw err;
+        };
     // 链式调用
     const promise2 = new MyPromise((resolve, reject) => {
       const resolveMicroTask = () => {
@@ -74,8 +101,8 @@ export default class MyPromise {
           } catch (e) {
             reject(e);
           }
-        })
-      }
+        });
+      };
       const rejectMicroTask = () => {
         queueMicrotask(() => {
           try {
@@ -84,14 +111,14 @@ export default class MyPromise {
           } catch (e) {
             reject(e);
           }
-        })
-      }
+        });
+      };
 
       if (this.status === FULFILLED) {
-        resolveMicroTask()
+        resolveMicroTask();
       }
       if (this.status === REJECTED) {
-        rejectMicroTask()
+        rejectMicroTask();
       }
       if (this.status === PENDING) {
         this.onResolveCbs.push(resolveMicroTask);
@@ -100,4 +127,28 @@ export default class MyPromise {
     });
     return promise2;
   }
+
+  static resolve(param) {
+    if (param instanceof MyPromise) {
+      return param;
+    }
+    return new MyPromise((resolve) => {
+      resolve(param);
+    });
+  }
+  static reject(reason) {
+    return new MyPromise((resolve, reject) => {
+      reject(reason);
+    });
+  }
 }
+MyPromise.deferred = function () {
+  var result = {};
+  result.promise = new MyPromise(function (resolve, reject) {
+    result.resolve = resolve;
+    result.reject = reject;
+  });
+
+  return result;
+};
+module.exports = MyPromise;

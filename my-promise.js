@@ -9,16 +9,7 @@ const resolvePromise = (promise, resolveRes, resolve, reject) => {
   }
 
   let called;
-  if (typeof resolveRes === MyPromise) {
-    resolve.then(
-      (res) => {
-        resolvePromise(promise, res, resolve, reject);
-      },
-      (err) => {
-        reject(err);
-      }
-    );
-  } else if (resolveRes !== null && (isObject(resolveRes) || isFunction(resolveRes))) {
+  if (resolveRes !== null && (isObject(resolveRes) || isFunction(resolveRes))) {
     try {
       const then = resolveRes.then;
       if (isFunction(then)) {
@@ -50,7 +41,7 @@ const resolvePromise = (promise, resolveRes, resolve, reject) => {
   }
 };
 
-class MyPromise {
+export default class MyPromise {
   constructor(executor) {
     if (typeof executor !== 'function') {
       throw new TypeError(`Promise resolver ${executor} is not a function`);
@@ -127,6 +118,20 @@ class MyPromise {
     });
     return promise2;
   }
+  catch(onReject) {
+    return this.then(null, onReject);
+  }
+
+  finally(callback) {
+    return this.then(
+      (value) => MyPromise.resolve(callback()).then(() => value),
+      (err) => {
+        MyPromise.resolve(callback()).then(() => {
+          throw err;
+        });
+      }
+    );
+  }
 
   static resolve(param) {
     if (param instanceof MyPromise) {
@@ -149,6 +154,7 @@ class MyPromise {
       for (let [index, promise] of list.entries()) {
         promise.then(
           (res) => {
+            console.log('index', index);
             values[index] = res;
             count++;
             count === list.length && resolve(values);
@@ -171,13 +177,13 @@ class MyPromise {
     });
   }
 }
-MyPromise.deferred = function () {
-  var result = {};
-  result.promise = new MyPromise(function (resolve, reject) {
-    result.resolve = resolve;
-    result.reject = reject;
-  });
+// MyPromise.deferred = function () {
+//   var result = {};
+//   result.promise = new MyPromise(function (resolve, reject) {
+//     result.resolve = resolve;
+//     result.reject = reject;
+//   });
 
-  return result;
-};
-module.exports = MyPromise;
+//   return result;
+// };
+// module.exports = MyPromise;
